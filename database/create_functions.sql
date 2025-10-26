@@ -8,8 +8,6 @@ DETERMINISTIC
 READS SQL DATA
 BEGIN
     DECLARE v_TotalRevenue DECIMAL(10, 2);
-
-    -- Use the COALESCE function to return 0 instead of NULL if no sales exist
     SELECT COALESCE(SUM(bd.Quantity * bd.PricePerTicket), 0)
     INTO v_TotalRevenue
     FROM BookingDetails bd
@@ -20,6 +18,60 @@ BEGIN
         AND b.Status = 'Confirmed';
 
     RETURN v_TotalRevenue;
+END$$
+
+DELIMITER ;
+
+
+
+
+DELIMITER $$
+
+CREATE FUNCTION fn_GetDaysUntilEvent(
+    p_EventID INT
+)
+RETURNS INT
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_EventDate DATETIME;
+    DECLARE v_DaysLeft INT;
+
+    SELECT EventStartTime INTO v_EventDate
+    FROM Events
+    WHERE EventID = p_EventID;
+    SET v_DaysLeft = DATEDIFF(v_EventDate, CURDATE());
+    IF v_DaysLeft < 0 THEN
+        SET v_DaysLeft = 0;
+    END IF;
+
+    RETURN v_DaysLeft;
+END$$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE FUNCTION fn_CheckStockAvailability(
+    p_TicketTypeID INT,
+    p_RequestedQuantity INT
+)
+RETURNS BOOLEAN
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_AvailableStock INT;
+    SELECT e.AvailableTickets INTO v_AvailableStock
+    FROM Events e
+    JOIN TicketTypes tt ON e.EventID = tt.EventID
+    WHERE tt.TicketTypeID = p_TicketTypeID;
+    IF v_AvailableStock IS NOT NULL AND v_AvailableStock >= p_RequestedQuantity THEN
+        RETURN 1; -- TRUE
+    ELSE
+        RETURN 0; -- FALSE
+    END IF;
+
 END$$
 
 DELIMITER ;

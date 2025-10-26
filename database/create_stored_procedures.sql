@@ -1,4 +1,3 @@
--- Set the delimiter to $$ to allow for semicolons inside the procedure
 DELIMITER $$
 
 CREATE PROCEDURE sp_CreateBooking(
@@ -9,15 +8,11 @@ CREATE PROCEDURE sp_CreateBooking(
     OUT p_Message VARCHAR(255)
 )
 BEGIN
-    -- == 1. DECLARE VARIABLES ==
     DECLARE v_TicketPrice DECIMAL(10, 2);
     DECLARE v_AvailableStock INT;
     DECLARE v_TotalAmount DECIMAL(10, 2);
     DECLARE v_BookingID INT;
     DECLARE v_EventID INT;
-
-    -- == 2. SET UP ERROR HANDLING ==
-    -- If any SQL error occurs, roll back the transaction and set the error message.
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -25,12 +20,7 @@ BEGIN
         SET p_Message = 'Error: Booking failed. Transaction rolled back.';
     END;
 
-    -- == 3. START THE TRANSACTION ==
     START TRANSACTION;
-
-    -- == 4. GET DATA & LOCK ROWS FOR UPDATE ==
-    -- Get the EventID and its current available tickets
-    -- FOR UPDATE locks this row to prevent race conditions (concurrency)
     SELECT 
         e.EventID, e.AvailableTickets, tt.Price 
     INTO 
@@ -39,33 +29,20 @@ BEGIN
     JOIN TicketTypes tt ON e.EventID = tt.EventID
     WHERE tt.TicketTypeID = p_TicketTypeID
     FOR UPDATE;
-
-    -- == 5. CHECK BUSINESS LOGIC (ARE TICKETS AVAILABLE?) ==
     IF v_AvailableStock >= p_Quantity THEN
-        
-        -- 5a. Calculate total cost
+
         SET v_TotalAmount = v_TicketPrice * p_Quantity;
-        
-        -- 5b. Create the parent Booking record
         INSERT INTO Bookings (CustomerID, TotalAmount, Status)
         VALUES (p_CustomerID, v_TotalAmount, 'Confirmed');
-        
-        -- 5c. Get the new BookingID that was just created
         SET v_BookingID = LAST_INSERT_ID();
-        
-        -- 5d. Create the child BookingDetails record
         INSERT INTO BookingDetails (BookingID, TicketTypeID, Quantity, PricePerTicket)
         VALUES (v_BookingID, p_TicketTypeID, p_Quantity, v_TicketPrice);
-        
-        -- 5e. Commit the transaction (this is the success point)
         COMMIT;
         
         SET p_NewBookingID = v_BookingID;
         SET p_Message = 'Booking successful! Your Booking ID is ' + CAST(v_BookingID AS CHAR);
 
     ELSE
-        -- == 6. FAILED BUSINESS LOGIC (NOT ENOUGH TICKETS) ==
-        -- Not an SQL error, but a business rule failure.
         ROLLBACK;
         SET p_NewBookingID = NULL;
         SET p_Message = 'Error: Not enough tickets available. Transaction rolled back.';
@@ -73,5 +50,84 @@ BEGIN
 
 END$$
 
--- Reset the delimiter back to ;
 DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_CancelBooking(
+    IN p_BookingID INT,
+    IN p_CustomerID INT,
+    OUT p_Message VARCHAR(255)
+)
+BEGIN
+    DECLARE v_CurrentStatus ENUM('Pending', 'Confirmed', 'Cancelled');
+    DECLARE v_OwnerID INT;
+
+    START TRANSACTION;
+
+    SELECT Status, CustomerID INTO v_CurrentStatus, v_OwnerID
+    FROM Bookings
+    WHERE BookingID = p_BookingID
+    FOR UPDATE; -- Lock the row
+
+    IF v_OwnerID IS NULL THEN
+        SET p_Message = 'Error: Booking not found.';
+        ROLLBACK;
+    ELSEIF v_OwnerID != p_CustomerID THEN
+        SET p_Message = 'Error: You do not have permission to cancel this booking.';
+        ROLLBACK;
+    ELSEIF v_CurrentStatus = 'Cancelled' THEN
+        SET p_Message = 'Info: This booking is already cancelled.';
+        ROLLBACK;
+    ELSE
+        UPDATE Bookings
+        SET Status = 'Cancelled'
+        WHERE BookingID = p_BookingID;
+        
+        COMMIT;
+        SET p_Message = 'Booking successfully cancelled.';
+    END IF;
+
+END$$
+
+DELIMITER ;
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_UpdateEventDetails(
+    IN p_EventID INT,
+    IN p_EventManagerID INT,
+    IN p_NewTitle VARCHAR(255),
+    IN p_NewDescription TEXT,
+    OUT p_Message VARCHAR(255)
+)
+BEGIN
+    DECLARE v_OwnerID INT;
+
+    SELECT EventManagerID INTO v_OwnerID
+    FROM Events
+    WHERE EventID = p_EventID;
+
+    IF v_OwnerID IS NULL THEN
+        SET p_Message = 'Error: Event not found.';
+    ELSEIF v_OwnerID != p_EventManagerID THEN
+        SET p_Message = 'Error: You do not have permission to edit this event.';
+    ELSE
+        UPDATE Events
+        SET 
+            Title = p_NewTitle,
+            Description = p_NewDescription
+        WHERE 
+            EventID = p_EventID;
+            
+        SET p_Message = 'Event updated successfully.';
+    END IF;
+
+END$$
+
+DELIMITER ;
+
+

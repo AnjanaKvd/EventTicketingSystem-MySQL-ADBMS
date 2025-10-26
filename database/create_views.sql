@@ -1,21 +1,13 @@
 CREATE VIEW v_UpcomingEvents AS
-SELECT
-    e.EventID,
-    e.Title,
-    e.Description,
-    e.EventStartTime,
-    e.EventEndTime,
-    v.Name AS VenueName,
-    v.City AS VenueCity,
-    e.AvailableTickets
-FROM
-    Events AS e
-JOIN
-    Venues AS v ON e.VenueID = v.VenueID
-WHERE
-    e.EventStartTime > NOW() -- Only show events that haven't happened yet
-ORDER BY
-    e.EventStartTime ASC;
+SELECT 
+    EventID,
+    Title,
+    EventStartTime,
+    fn_GetDaysUntilEvent(EventID) AS DaysRemaining
+FROM 
+    Events
+WHERE 
+    EventStartTime > NOW();
     
     
 CREATE VIEW v_EventSalesReport AS
@@ -38,3 +30,8 @@ WHERE
 GROUP BY
     e.EventID,
     tt.TypeName;
+    
+    
+
+    
+    
