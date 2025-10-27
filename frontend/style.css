@@ -1,0 +1,19 @@
+/* Basic styles for the app */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Hide all "pages" by default */
+.page {
+    display: none;
+}
+
+/* The "active" page will be shown */
+.page.active {
+    display: block;
+}
+
+/* Simple transition for modals */
+.modal {
+    transition: opacity 0.25s ease;
+}

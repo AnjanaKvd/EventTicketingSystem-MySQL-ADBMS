@@ -1,102 +1,408 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-100">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event System Demo</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; background: #f4f4f4; }
-        div { background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
-        input, button { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; border-radius: 5px; border: 1px solid #ddd; }
-        button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        pre { background: #222; color: #00ff00; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
-    </style>
-</head>
-<body>
+    <title>Event Ticketing System</title>
 
-    <h1>Event Ticketing System Demo</h1>
-
-    <div>
-        <h2>Get All Events</h2>
-        <button id="getEventsBtn">Fetch Upcoming Events</button>
-    </div>
-
-    <div>
-        <h2>Test Login (User: alice@gmail.com, Pass: password123)</h2>
-        <form id="loginForm">
-            <input type="email" id="loginEmail" placeholder="Email" value="alice@gmail.com">
-            <input type="password" id="loginPassword" placeholder="Password" value="password123">
-            <button type="submit">Login</button>
-        </form>
-    </div>
-
-    <div>
-        <h2>Test Booking</h2>
-        <form id="bookingForm">
-            <input type="number" id="bookCustId" placeholder="Customer ID" value="3">
-            <input type="number" id="bookTicketType" placeholder="TicketType ID" value="3">
-            <input type="number" id="bookQuantity" placeholder="Quantity" value="1">
-            <button type="submit">Submit Booking</button>
-        </form>
-    </div>
-
-    <div>
-        <h2>API Response</h2>
-        <pre id="results">Click a button to see results...</pre>
-    </div>
-
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        const API_URL = 'http://localhost:3000';
-        const resultsBox = document.getElementById('results');
-
-        // Helper function to display results
-        function showResults(data) {
-            resultsBox.textContent = JSON.stringify(data, null, 2);
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
         }
-
-        // 1. Get Events
-        document.getElementById('getEventsBtn').addEventListener('click', async () => {
-            const res = await fetch(`${API_URL}/api/events`);
-            const data = await res.json();
-            showResults(data);
-        });
-
-        // 2. Login
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            const res = await fetch(`${API_URL}/api/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await res.json();
-            showResults(data);
-        });
-
-        // 3. Book Ticket
-        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const customerId = document.getElementById('bookCustId').value;
-            const ticketTypeId = document.getElementById('bookTicketType').value;
-            const quantity = document.getElementById('bookQuantity').value;
-
-            const res = await fetch(`${API_URL}/api/bookings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    customerId: parseInt(customerId), 
-                    ticketTypeId: parseInt(ticketTypeId), 
-                    quantity: parseInt(quantity) 
-                })
-            });
-            const data = await res.json();
-            showResults(data);
-        });
     </script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="app.js" defer></script>
+</head>
+
+<body class="h-full">
+
+    <div class="min-h-full">
+        <nav class="bg-gray-800">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="text-white font-bold text-xl">Tickets Booking</span>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <a href="#"
+                                    class="nav-link bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium"
+                                    data-page="page-events">Events</a>
+                                <a href="#"
+                                    class="nav-link text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                    data-page="page-my-bookings" id="nav-my-bookings" style="display: none;">My
+                                    Bookings</a>
+                                <a href="#"
+                                    class="nav-link text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                    data-page="page-admin" id="nav-admin" style="display: none;">Admin Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-4 flex items-center md:ml-6">
+                            <div id="auth-links">
+                                <a href="#"
+                                    class="nav-link text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                    data-page="page-login">Login</a>
+                                <a href="#"
+                                    class="nav-link text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                    data-page="page-register">Register</a>
+                            </div>
+                            <div id="user-info" class="text-white" style="display: none;">
+                                <span id="user-welcome" class="mr-3"></span>
+                                <a href="#" id="logout-button"
+                                    class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+
+                <section id="page-login" class="page active">
+                    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+                        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+                            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">Sign
+                                in to your account</h2>
+                        </div>
+                        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                            <form id="login-form" class="space-y-6">
+                                <div>
+                                    <label for="login-email"
+                                        class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
+                                    <div class="mt-2">
+                                        <input id="login-email" name="email" type="email" autocomplete="email" required
+                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            value="alice@gmail.com">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="login-password"
+                                        class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+                                    <div class="mt-2">
+                                        <input id="login-password" name="password" type="password"
+                                            autocomplete="current-password" required
+                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            value="password123">
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="submit"
+                                        class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign
+                                        in</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-register" class="page">
+                    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+                        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+                            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+                                Create a new account</h2>
+                        </div>
+                        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                            <form id="register-form" class="space-y-6">
+                                <div>
+                                    <label for="register-username"
+                                        class="block text-sm font-medium leading-6 text-gray-900">Username</label>
+                                    <input id="register-username" name="username" type="text" required
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                </div>
+                                <div>
+                                    <label for="register-email"
+                                        class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
+                                    <input id="register-email" name="email" type="email" required
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                </div>
+                                <div>
+                                    <label for="register-password"
+                                        class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+                                    <input id="register-password" name="password" type="password" required
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                </div>
+                                <div>
+                                    <button type="submit"
+                                        class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500">Register</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-events" class="page">
+                    <header class="bg-white shadow-sm">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 px-4 py-6">Upcoming Events</h1>
+                    </header>
+                    <div id="events-grid"
+                        class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+                    </div>
+                </section>
+
+                <section id="page-event-detail" class="page">
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 id="event-detail-title" class="text-3xl font-bold leading-6 text-gray-900"></h2>
+                            <p id="event-detail-venue" class="mt-1 max-w-2xl text-sm text-gray-500"></p>
+                        </div>
+                        <div class="border-t border-gray-200">
+                            <dl>
+                                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-gray-500">When</dt>
+                                    <dd id="event-detail-time" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                    </dd>
+                                </div>
+                                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-gray-500">Description</dt>
+                                    <dd id="event-detail-desc" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                    </dd>
+                                </div>
+                                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-gray-500">Stats</dt>
+                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                        <span id="event-detail-days" class="mr-4"></span>
+                                        <span id="event-detail-revenue" class="mr-4"></span>
+                                        <span id="event-detail-available" class="font-bold"></span>
+                                    </dd>
+                                </div>
+                                <div class="bg-white px-4 py-5 sm:px-6">
+                                    <h3 class="text-lg font-medium text-gray-900">Book Tickets</h3>
+                                    <form id="booking-form" class="mt-4 space-y-4">
+                                        <input type="hidden" id="booking-event-id">
+                                        <div>
+                                            <label for="booking-ticket-type"
+                                                class="block text-sm font-medium text-gray-700">Ticket Type</label>
+                                            <select id="booking-ticket-type"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="booking-quantity"
+                                                class="block text-sm font-medium text-gray-700">Quantity</label>
+                                            <input type="number" id="booking-quantity" value="1" min="1"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                        </div>
+                                        <button type="submit"
+                                            class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Book
+                                            Now</button>
+                                    </form>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-my-bookings" class="page">
+                    <header class="bg-white shadow-sm">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 px-4 py-6">My Bookings</h1>
+                    </header>
+                    <div id="my-bookings-stats" class="mb-4"></div>
+                    <div class="mt-6 flow-root">
+                        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                <table class="min-w-full divide-y divide-gray-300">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col"
+                                                class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                                                Event</th>
+                                            <th scope="col"
+                                                class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                Details</th>
+                                            <th scope="col"
+                                                class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status
+                                            </th>
+                                            <th scope="col"
+                                                class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Total
+                                            </th>
+                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="my-bookings-table" class="divide-y divide-gray-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-admin" class="page">
+                    <header class="bg-white shadow-sm">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 px-4 py-6">Admin Dashboard</h1>
+                    </header>
+
+                    <h2 class="text-2xl font-semibold text-gray-800 mt-4">Event Management</h2>
+                    <div class="mt-4 grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-x-8">
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Create New Event</h3>
+                            <form id="create-event-form" class="mt-4 space-y-4">
+                                <input type="number" id="create-venue-id" placeholder="Venue ID (e.g., 1, 2, 3)"
+                                    required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="create-title" placeholder="Event Title" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <textarea id="create-desc" placeholder="Event Description" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300"></textarea>
+                                <div>
+                                    <label for="create-event-date" class="block text-sm font-medium text-gray-700">Event
+                                        Start Time</label>
+                                    <input type="datetime-local" id="create-event-date" required
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                </div>
+                                <button type="submit"
+                                    class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">Create
+                                    Event</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Update Event Details</h3>
+                            <form id="update-event-form" class="mt-4 space-y-4">
+                                <input type="number" id="update-event-id" placeholder="Event ID to update" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="update-event-title" placeholder="New Title" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <textarea id="update-event-desc" placeholder="New Description" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300"></textarea>
+                                <button type="submit"
+                                    class="rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500">Update
+                                    Event</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Get Event Sales Report</h3>
+                            <form id="report-form" class="mt-4 space-y-4">
+                                <input type="number" id="report-event-id" placeholder="Event ID" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <button type="submit"
+                                    class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">Get
+                                    Report</button>
+                            </form>
+                            <div id="report-results" class="mt-4"></div>
+                        </div>
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Cancel / Delete Event</h3>
+                            <p class="text-sm text-gray-500">Note: This will fail if tickets have already been sold.</p>
+                            <form id="delete-event-form" class="mt-4 space-y-4">
+                                <input type="number" id="delete-event-id" placeholder="Event ID to delete" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <button type="submit"
+                                    class="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600">Delete
+                                    Event</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-semibold text-gray-800 mt-10 pt-6 border-t">Venue Management</h2>
+                    <div class="mt-4 grid grid-cols-1 gap-y-6 lg:grid-cols-3 lg:gap-x-8">
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Create New Venue</h3>
+                            <form id="create-venue-form" class="mt-4 space-y-4">
+                                <input type="text" id="create-venue-name" placeholder="Venue Name" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="create-venue-location" placeholder="Location (e.g., 'Colombo')"
+                                    required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="number" id="create-venue-capacity" placeholder="Total Capacity" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <button type="submit"
+                                    class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">Create
+                                    Venue</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Update Venue</h3>
+                            <form id="update-venue-form" class="mt-4 space-y-4">
+                                <input type="number" id="update-venue-id" placeholder="Venue ID to Update" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="update-venue-name" placeholder="New Venue Name" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="update-venue-location" placeholder="New Location" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="number" id="update-venue-capacity" placeholder="New Capacity" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <button type="submit"
+                                    class="rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500">Update
+                                    Venue</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Delete Venue</h3>
+                            <p class="text-sm text-gray-500">Note: This will fail if events are scheduled at this venue.
+                            </p>
+                            <form id="delete-venue-form" class="mt-4 space-y-4">
+                                <input type="number" id="delete-venue-id" placeholder="Venue ID to Delete" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <button type="submit"
+                                    class="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600">Delete
+                                    Venue</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 bg-white shadow sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900">Current Venues</h3>
+                        <div class="mt-4 flow-root">
+                            <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                    <table class="min-w-full divide-y divide-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th
+                                                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                                                    ID</th>
+                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                    Name</th>
+                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                    Location</th>
+                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                    Capacity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="venue-list-table" class="divide-y divide-gray-200">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal"
+        class="modal fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 opacity-0 pointer-events-none">
+        <div id="modal-content" class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full">
+            <h3 id="modal-title" class="text-lg font-medium"></h3>
+            <p id="modal-message" class="text-sm text-gray-600 mt-2"></p>
+            <button id="modal-close"
+                class="mt-4 w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Close</button>
+        </div>
+    </div>
+
 </body>
+
 </html>

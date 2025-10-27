@@ -12,7 +12,8 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME,
     waitForConnections: true, // Wait for a connection to be available
     connectionLimit: 10,      // Max number of connections in the pool
-    queueLimit: 0             // No limit on the number of waiting requests
+    queueLimit: 0,             // No limit on the number of waiting requests
+    multipleStatements: true
 });
 
 // A simple function to test the connection on startup

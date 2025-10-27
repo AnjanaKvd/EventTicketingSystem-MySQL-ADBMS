@@ -75,3 +75,28 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+
+
+
+DELIMITER $$
+
+CREATE FUNCTION fn_GetUserTotalSpent(
+    p_CustomerID INT
+)
+RETURNS DECIMAL(10, 2)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_TotalSpent DECIMAL(10, 2);
+    SELECT COALESCE(SUM(TotalAmount), 0.00)
+    INTO v_TotalSpent
+    FROM Bookings
+    WHERE 
+        CustomerID = p_CustomerID
+        AND Status = 'Confirmed';
+
+    RETURN v_TotalSpent;
+END$$
+
+DELIMITER ;
