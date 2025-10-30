@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'page-admin':
                 loadVenuesList();
                 loadTicketsList();
+                loadEventDropdowns();
                 break;
         }
     }
@@ -199,6 +200,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === PAGE LOADERS ===
+
+    // Load available events for dropdowns
+    async function loadEventDropdowns() {
+        const events = await api.get('/events');
+        if (!events || events.length === 0) return;
+
+        const dropdownIds = ['create-ticket-event-id', 'report-event-id', 'delete-event-id'];
+        
+        dropdownIds.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                select.innerHTML = '<option value="">Select an Event</option>' +
+                    events.map(event => `<option value="${event.EventID}">${event.Title} (ID: ${event.EventID})</option>`).join('');
+            }
+        });
+    }
 
     // 1. Load All Events Page
     async function loadEventsPage() {
@@ -313,24 +330,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalRevenue = 0;
         let totalTickets = 0;
 
-        const tableRows = reportData.map(r => {
-            totalRevenue += parseFloat(r.TotalRevenue);
-            totalTickets += r.TicketsSold;
-            return `
-                <tr>
-                    <td class="py-2 text-sm text-gray-700">${r.TicketType}</td>
-                    <td class="py-2 text-sm text-gray-700 text-right">${r.TicketsSold}</td>
-                    <td class="py-2 text-sm text-gray-700 text-right">$${r.TotalRevenue.toFixed(2)}</td>
-                </tr>
-            `;
-        }).join('');
+        // Calculate totals
+        reportData.forEach(row => {
+            totalTickets += parseInt(row.TicketsSold);
+            totalRevenue += parseFloat(row.TotalRevenue);
+        });
+
+        const tableRows = reportData.map(r => `
+            <tr>
+                <td class="px-3 py-2 text-left text-sm text-gray-500">${r.TicketType}</td>
+                <td class="px-3 py-2 text-right text-sm text-gray-500">${r.TicketsSold}</td>
+                <td class="px-3 py-2 text-right text-sm text-gray-500">${parseFloat(r.TotalRevenue).toFixed(2)}</td>
+            </tr>
+        `).join('');
 
         resultsDiv.innerHTML = `
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">${reportData[0].EventTitle}</h3>
+            </div>
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Sold</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ticket Type</th>
+                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Tickets Sold</th>
                         <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
                     </tr>
                 </thead>
@@ -341,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr>
                         <td class="px-3 py-2 text-left text-sm font-bold text-gray-900">TOTALS</td>
                         <td class="px-3 py-2 text-right text-sm font-bold text-gray-900">${totalTickets}</td>
-                        <td class="px-3 py-2 text-right text-sm font-bold text-gray-900">$${totalRevenue.toFixed(2)}</td>
+                        <td class="px-3 py-2 text-right text-sm font-bold text-gray-900">${totalRevenue.toFixed(2)}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -381,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load tickets list for admin
     async function loadTicketsList() {
         // Load events dropdown first
-        await loadEventDropdown();
+        await loadEventDropdowns();
         
         const tickets = await api.get('/tickets');
         const table = document.getElementById('ticket-list-table');
