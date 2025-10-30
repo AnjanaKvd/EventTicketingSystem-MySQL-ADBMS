@@ -16,8 +16,7 @@ exports.getOneEvent = async (req, res) => {
         const query = `
             SELECT 
                 *, 
-                fn_GetDaysUntilEvent(EventID) AS DaysRemaining,
-                fn_GetEventTotalRevenue(EventID) AS TotalRevenue
+                fn_GetDaysUntilEvent(EventID) AS DaysRemaining
             FROM v_upcomingevents 
             WHERE EventID = ?;
         `;
