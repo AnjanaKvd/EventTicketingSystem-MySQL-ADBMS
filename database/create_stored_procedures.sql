@@ -334,3 +334,17 @@ END$$
 DELIMITER ;
 
 
+
+DELIMITER $$
+CREATE PROCEDURE sp_ArchiveOldEvents()
+BEGIN
+    INSERT INTO EventsArchive
+    SELECT * FROM Events
+    WHERE EventEndTime < NOW() - INTERVAL 30 DAY;
+    
+    DELETE FROM Events
+    WHERE EventEndTime < NOW() - INTERVAL 30 DAY;
+END$$
+DELIMITER ;
+
+
