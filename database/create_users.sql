@@ -9,6 +9,10 @@ GRANT EXECUTE ON PROCEDURE EventBooking2.sp_CancelBooking TO 'app_backend'@'loca
 GRANT EXECUTE ON PROCEDURE EventBooking2.sp_CreateEvent TO 'app_backend'@'localhost';
 GRANT EXECUTE ON PROCEDURE EventBooking2.sp_CancelEvent TO 'app_backend'@'localhost';
 
+GRANT EXECUTE ON FUNCTION EventBooking2.fn_GetDaysUntilEvent TO 'app_backend'@'localhost';
+GRANT EXECUTE ON FUNCTION EventBooking2.fn_GetEventTotalRevenue TO 'app_backend'@'localhost';
+GRANT EXECUTE ON FUNCTION EventBooking2.fn_GetUserTotalSpent TO 'app_backend'@'localhost';
+
 GRANT SELECT ON EventBooking2.v_UpcomingEvents TO 'app_backend'@'localhost';
 GRANT SELECT ON EventBooking2.v_EventSalesReport TO 'app_backend'@'localhost';
 

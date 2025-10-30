@@ -1,13 +1,21 @@
-CREATE VIEW v_UpcomingEvents AS
+CREATE OR REPLACE VIEW v_UpcomingEvents AS
 SELECT 
-    EventID,
-    Title,
-    EventStartTime,
-    fn_GetDaysUntilEvent(EventID) AS DaysRemaining
+    e.EventID,
+    e.Title,
+    e.Description,
+    e.EventStartTime,
+    v.Name AS VenueName,
+    v.City AS VenueCity,
+    e.AvailableTickets,
+    fn_GetDaysUntilEvent(e.EventID) AS DaysRemaining
 FROM 
-    Events
+    Events AS e
+JOIN 
+    Venues AS v ON e.VenueID = v.VenueID
 WHERE 
-    EventStartTime > NOW();
+    e.EventStartTime > NOW()
+ORDER BY
+    e.EventStartTime ASC;
     
     
 CREATE VIEW v_EventSalesReport AS

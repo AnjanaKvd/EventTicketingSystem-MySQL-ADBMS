@@ -35,19 +35,26 @@ exports.getOneEvent = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
     try {
-        const { managerId, venueId, title, description, eventDate } = req.body;
-        if (!managerId || !venueId || !title || !description || !eventDate) {
-            return res.status(400).json({ message: 'Missing required fields' });
+        const { managerId, venueId, title, description, eventStartTime, eventDurationHours } = req.body;
+        
+        if (!managerId || !venueId || !title || !description || !eventStartTime || !eventDurationHours) {
+            return res.status(400).json({ message: 'Missing required fields: managerId, venueId, title, description, eventStartTime, eventDurationHours' });
         }
-
-        const query = 'CALL sp_CreateEvent(?, ?, ?, ?, ?, @p_NewEventID, @p_Message); SELECT @p_NewEventID AS newEventId, @p_Message AS message;';
-        const params = [managerId, venueId, title, description, eventDate];
-        const [results] = await pool.query(query, params);
-        const output = results[1][0];
+        const duration = parseInt(eventDurationHours, 10);
+        if (isNaN(duration) || duration <= 0) {
+             return res.status(400).json({ message: 'Invalid eventDurationHours. Must be a positive number.' });
+        }
+        await pool.query(
+            'CALL sp_CreateEvent(?, ?, ?, ?, ?, ?, @p_NewEventID, @p_Message)', 
+            [managerId, venueId, title, description, eventStartTime, duration] 
+        );
+        const [outputRows] = await pool.query('SELECT @p_NewEventID AS newEventId, @p_Message AS message');
+        const output = outputRows[0];
         if (output.newEventId === null) {
             return res.status(400).json({ message: output.message });
         }
         res.status(201).json({ eventId: output.newEventId, message: output.message });
+
     } catch (err) {
         console.error('Error in POST /api/events:', err.message);
         res.status(500).json({ message: 'Server error creating event' });

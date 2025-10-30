@@ -265,6 +265,13 @@
                                     <input type="datetime-local" id="create-event-date" required
                                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
                                 </div>
+                                <div>
+                                    <label for="create-event-duration" class="block text-sm font-medium text-gray-700">Event
+                                        Duration (hours)</label>
+                                    <input type="number" id="create-event-duration" required min="1" step="1" value="3"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300"
+                                        placeholder="Enter duration in hours">
+                                </div>
                                 <button type="submit"
                                     class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">Create
                                     Event</button>
@@ -319,6 +326,8 @@
                             <form id="create-venue-form" class="mt-4 space-y-4">
                                 <input type="text" id="create-venue-name" placeholder="Venue Name" required
                                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="create-venue-address" placeholder="Address" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
                                 <input type="text" id="create-venue-location" placeholder="Location (e.g., 'Colombo')"
                                     required
                                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
@@ -336,6 +345,8 @@
                                 <input type="number" id="update-venue-id" placeholder="Venue ID to Update" required
                                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
                                 <input type="text" id="update-venue-name" placeholder="New Venue Name" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="text" id="update-venue-address" placeholder="New Address" required
                                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
                                 <input type="text" id="update-venue-location" placeholder="New Location" required
                                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
@@ -374,6 +385,8 @@
                                                     ID</th>
                                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                                     Name</th>
+                                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                    Address</th>
                                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                                     Location</th>
                                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">

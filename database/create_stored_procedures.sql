@@ -200,6 +200,7 @@ CREATE PROCEDURE sp_CreateEvent(
     IN p_Title VARCHAR(255),
     IN p_Description TEXT,
     IN p_EventStartTime DATETIME,
+    IN p_DurationHours INT,
     OUT p_NewEventID INT,
     OUT p_Message VARCHAR(255)
 )
@@ -217,6 +218,11 @@ BEGIN
     IF p_EventStartTime <= NOW() THEN
         SET p_NewEventID = NULL;
         SET p_Message = 'Error: Cannot create an event in the past.';
+        
+    ELSEIF p_DurationHours <= 0 THEN 
+        SET p_NewEventID = NULL;
+        SET p_Message = 'Error: Event duration must be at least 1 hour.';
+
     ELSE
         SELECT TotalCapacity INTO v_VenueCapacity
         FROM Venues
@@ -226,7 +232,7 @@ BEGIN
             SET p_NewEventID = NULL;
             SET p_Message = 'Error: Invalid VenueID.';
         ELSE
-            SET v_EventEndTime = DATE_ADD(p_EventStartTime, INTERVAL 3 HOUR);
+            SET v_EventEndTime = DATE_ADD(p_EventStartTime, INTERVAL p_DurationHours HOUR);
             
             START TRANSACTION;
             

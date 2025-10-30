@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load user stats
         const stats = await api.get(`/my-stats?customerId=${userId}`);
         document.getElementById('my-bookings-stats').innerHTML =
-            `<p class="text-lg font-medium text-gray-700">Total Spent on Confirmed Bookings: <span class="font-bold text-indigo-600">$${stats.totalSpent}</span></p>`;
+            `<p class="text-lg font-medium text-gray-700">Total Spent on Confirmed Bookings: <span class="font-bold text-indigo-600">${stats.totalSpent}</span></p>`;
 
         // Load booking history
         const bookings = await api.get(`/my-bookings?customerId=${userId}`);
@@ -371,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
             <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">${v.VenueID}</td>
             <td class="px-3 py-4 text-sm text-gray-500">${v.Name}</td>
+            <td class="px-3 py-4 text-sm text-gray-500">${v.Address}</td>
             <td class="px-3 py-4 text-sm text-gray-500">${v.City}</td>
             <td class="px-3 py-4 text-sm text-gray-500">${v.TotalCapacity}</td>
         </tr>
@@ -486,7 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
             venueId: parseInt(document.getElementById('create-venue-id').value),
             title: document.getElementById('create-title').value,
             description: document.getElementById('create-desc').value,
-            eventDate: document.getElementById('create-event-date').value
+            eventStartTime: document.getElementById('create-event-date').value,
+            eventDurationHours: parseInt(document.getElementById('create-event-duration').value)
         };
 
         // This assumes you have mounted your createEvent controller at POST /api/events
@@ -568,6 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const body = {
             name: document.getElementById('create-venue-name').value,
+            address: document.getElementById('create-venue-address').value,
             location: document.getElementById('create-venue-location').value,
             capacity: parseInt(document.getElementById('create-venue-capacity').value)
         };
@@ -592,6 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const venueId = document.getElementById('update-venue-id').value;
         const body = {
             name: document.getElementById('update-venue-name').value,
+            address: document.getElementById('update-venue-address').value,
             location: document.getElementById('update-venue-location').value,
             capacity: parseInt(document.getElementById('update-venue-capacity').value)
         };

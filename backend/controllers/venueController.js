@@ -3,7 +3,7 @@ const pool = require('../db');
 exports.createVenue = async (req, res) => {
     try {
         const { name, address, location, capacity } = req.body;
-        if (!name || !location || !capacity) {
+        if (!name || !address || !location || !capacity) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
         const query = 'INSERT INTO Venues (Name, Address, City, TotalCapacity) VALUES (?, ?, ?, ?)';
