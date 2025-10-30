@@ -266,7 +266,8 @@
                                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
                                 </div>
                                 <div>
-                                    <label for="create-event-duration" class="block text-sm font-medium text-gray-700">Event
+                                    <label for="create-event-duration"
+                                        class="block text-sm font-medium text-gray-700">Event
                                         Duration (hours)</label>
                                     <input type="number" id="create-event-duration" required min="1" step="1" value="3"
                                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300"
@@ -315,6 +316,54 @@
                                     class="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600">Delete
                                     Event</button>
                             </form>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-semibold text-gray-800 mt-4">Ticket Management</h2>
+                    <div class="mt-4 grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-x-8">
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900">Create Ticket</h3>
+                            <form id="create-ticket-form" class="mt-4 space-y-4">
+                                <select id="create-ticket-event-id" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                    <option value="">Select an Event</option>
+                                </select>
+                                <input type="text" id="create-ticket-type" placeholder="Ticket Type Name" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="number" id="create-ticket-price" placeholder="Price" required step="0.01"
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <input type="number" id="create-ticket-quantity" placeholder="Total Quantity" required
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                                <button type="submit"
+                                    class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">Create
+                                    Ticket</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white shadow sm:rounded-lg p-6">
+                            <h4 class="text-sm font-medium text-gray-900">Existing Tickets</h4>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-300">
+                                    <thead>
+                                        <tr>
+                                            <th
+                                                class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                                                ID</th>
+                                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Event
+                                            </th>
+                                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type
+                                            </th>
+                                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Price
+                                            </th>
+                                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Qty
+                                            </th>
+                                            <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ticket-list-table" class="divide-y divide-gray-200">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 

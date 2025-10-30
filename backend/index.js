@@ -17,6 +17,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const userRoutes = require('./routes/userRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const venueRoutes = require('./routes/venueRoutes')
+const ticketRoutes = require('./routes/ticketRoutes');
 
 app.use('/api', authRoutes);    // Mounts /api/login, /api/register
 app.use('/api', eventRoutes);   // Mounts /api/events, /api/check-stock
@@ -24,6 +25,7 @@ app.use('/api', bookingRoutes); // Mounts /api/bookings
 app.use('/api', userRoutes);    // Mounts /api/my-bookings, /api/my-stats
 app.use('/api', reportRoutes);  // Mounts /api/reports
 app.use('/api', venueRoutes);   // Mounts /api/venues
+app.use('/api', ticketRoutes);   // Mounts /api/tickets
 
 // 5. Start the Server
 app.listen(PORT, () => {

@@ -4,6 +4,7 @@ SELECT
     e.Title,
     e.Description,
     e.EventStartTime,
+    e.EventEndTime,
     v.Name AS VenueName,
     v.City AS VenueCity,
     e.AvailableTickets,

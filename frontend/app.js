@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'page-admin':
                 loadVenuesList();
+                loadTicketsList();
                 break;
         }
     }
@@ -234,36 +235,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('event-detail-time').textContent = `${new Date(event.EventStartTime).toLocaleString()} to ${new Date(event.EventEndTime).toLocaleString()}`;
         document.getElementById('event-detail-desc').textContent = event.Description;
         document.getElementById('event-detail-days').textContent = `${event.DaysRemaining} days left`;
-        document.getElementById('event-detail-revenue').textContent = `Total Revenue: $${event.TotalRevenue}`;
         document.getElementById('event-detail-available').textContent = `${event.AvailableTickets} tickets available`;
 
         document.getElementById('booking-event-id').value = event.EventID;
 
-        // We need to fetch the *actual* ticket types for this event
-        // This is a missing part of our backend, so we'll simulate it
-        // In a real app, you'd have a GET /api/events/:id/ticket-types
-        const ticketTypes = [
-            { TicketTypeID: 1, TypeName: "General Admission", Price: 50.00 },
-            { TicketTypeID: 2, TypeName: "VIP", Price: 200.00 },
-            // This is just a placeholder. Our booking form uses ID, so we'll guess.
-        ];
-
-        // Let's call our *other* API to get the event's report (which has ticket types)
-        const report = await api.get(`/reports/event/${id}`);
+        // Fetch available ticket types for this event
+        const ticketTypes = await api.get(`/tickets/event/${id}`);
         const select = document.getElementById('booking-ticket-type');
 
-        if (report && report.length > 0) {
-            select.innerHTML = report.map(tt =>
-                `<option value="${tt.TicketTypeID}">Error: This TicketTypeID is from the report, not the real table. Use DB to find real ID.</option>`
-            ).join('');
-            // HACK: Since we don't have the *real* TicketTypeID, we will hardcode it based on our dummy data.
-            // This is a known limitation of our current API design.
-            if (id == 1) select.innerHTML = `<option value="1">General Admission</option><option value="2">VIP Pass</option>`;
-            else if (id == 2) select.innerHTML = `<option value="3">Balcony</option><option value="4">Orchestra Premier</option>`;
-            else if (id == 3) select.innerHTML = `<option value="5">A-Stand</option><option value="6">Grand Stand</option>`;
-            else select.innerHTML = `<option value="">No types found</option>`;
+        if (ticketTypes && ticketTypes.length > 0) {
+            select.innerHTML = `<option value="">Select a ticket type</option>` + 
+                ticketTypes.map(tt => {
+                    const price = parseFloat(tt.Price || 0);
+                    const qty = tt.Quantity ?? 0;
+                    return `<option value="${tt.TicketTypeID}">${tt.TypeName} - ${price.toFixed(2)} (${qty} available)</option>`;
+                }).join('');
         } else {
-            select.innerHTML = `<option value="">No ticket types found</option>`;
+            select.innerHTML = `<option value="">No tickets available</option>`;
         }
 
         showPage('page-event-detail');
@@ -359,6 +347,18 @@ document.addEventListener('DOMContentLoaded', () => {
             </table>
         `;
     }
+    // Load available events for ticket creation
+    async function loadEventDropdown() {
+        const events = await api.get('/events');
+        const select = document.getElementById('create-ticket-event-id');
+        if (!events || events.length === 0) {
+            select.innerHTML = '<option value="">No events available</option>';
+            return;
+        }
+        select.innerHTML = '<option value="">Select an Event</option>' +
+            events.map(event => `<option value="${event.EventID}">${event.Title}</option>`).join('');
+    }
+
     // 5. Load Admin Venue List
     async function loadVenuesList() {
         const venues = await api.get('/venues');
@@ -376,6 +376,31 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="px-3 py-4 text-sm text-gray-500">${v.TotalCapacity}</td>
         </tr>
     `).join('');
+    }
+
+    // Load tickets list for admin
+    async function loadTicketsList() {
+        // Load events dropdown first
+        await loadEventDropdown();
+        
+        const tickets = await api.get('/tickets');
+        const table = document.getElementById('ticket-list-table');
+        if (!tickets || tickets.length === 0) {
+            table.innerHTML = '<tr><td colspan="6" class="text-center py-4">No tickets found.</td></tr>';
+            return;
+        }
+        table.innerHTML = tickets.map(t => `
+            <tr>
+                <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">${t.TicketTypeID}</td>
+                <td class="px-3 py-4 text-sm text-gray-500">${t.Title}</td>
+                <td class="px-3 py-4 text-sm text-gray-500">${t.TypeName}</td>
+                <td class="px-3 py-4 text-sm text-gray-500">${parseFloat(t.Price).toFixed(2)}</td>
+                <td class="px-3 py-4 text-sm text-gray-500">${t.Quantity}</td>
+                <td class="px-3 py-4 text-right text-sm font-medium">
+                    <a href="#" class="text-red-600 hover:text-red-900 delete-ticket-btn" data-ticket-id="${t.TicketTypeID}">Delete</a>
+                </td>
+            </tr>
+        `).join('');
     }
 
     // === EVENT LISTENERS ===
@@ -432,9 +457,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return showPage('page-login');
         }
 
+        const ticketTypeValue = document.getElementById('booking-ticket-type').value;
+        if (!ticketTypeValue) {
+            return showAlert('No Ticket Selected', 'Please select a ticket type before booking.');
+        }
+
         const body = {
             customerId: authService.getUserId(),
-            ticketTypeId: parseInt(document.getElementById('booking-ticket-type').value),
+            ticketTypeId: parseInt(ticketTypeValue),
             quantity: parseInt(document.getElementById('booking-quantity').value)
         };
 
@@ -586,6 +616,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 12b. Admin - Create Ticket Form
+    document.getElementById('create-ticket-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!authService.isAdmin()) {
+            return showAlert('Unauthorized', 'You do not have permission.');
+        }
+
+        const body = {
+            eventId: parseInt(document.getElementById('create-ticket-event-id').value),
+            typeName: document.getElementById('create-ticket-type').value,
+            price: parseFloat(document.getElementById('create-ticket-price').value),
+            totalQuantity: parseInt(document.getElementById('create-ticket-quantity').value)
+        };
+
+        const data = await api.post('/tickets', body);
+
+        if (data.newTicketTypeId) {
+            showAlert('Success', data.message || 'Ticket created');
+            document.getElementById('create-ticket-form').reset();
+            loadTicketsList();
+        } else {
+            showAlert('Error', data.message || 'Could not create ticket');
+        }
+    });
+
     // 13. Admin - Update Venue Form
     document.getElementById('update-venue-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -630,6 +685,29 @@ document.addEventListener('DOMContentLoaded', () => {
             loadVenuesList(); // Refresh the venue list
         }
     });
+
+        // Tickets - delete (event delegation)
+        const ticketTable = document.getElementById('ticket-list-table');
+        if (ticketTable) {
+            ticketTable.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-ticket-btn')) {
+                    e.preventDefault();
+                    const ticketId = e.target.dataset.ticketId;
+                    // Proceed with delete
+                    const data = await api.del(`/tickets/${ticketId}`);
+                    if (!data) {
+                        showAlert('Error', 'No response from server');
+                        return;
+                    }
+                    if (data.message && data.message.startsWith('Error:')) {
+                        showAlert('Delete Failed', data.message);
+                    } else {
+                        showAlert('Deleted', data.message || 'Ticket deleted');
+                        loadTicketsList();
+                    }
+                }
+            });
+        }
 
 
     // === INITIALIZATION ===

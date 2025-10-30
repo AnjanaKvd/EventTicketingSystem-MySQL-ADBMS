@@ -24,6 +24,8 @@ GRANT UPDATE ON EventBooking2.Venues TO 'app_backend'@'localhost';
 GRANT DELETE ON EventBooking2.Venues TO 'app_backend'@'localhost';
 GRANT SELECT ON EventBooking2.Users TO 'app_backend'@'localhost';
 GRANT SELECT ON EventBooking2.TicketTypes TO 'app_backend'@'localhost';
+GRANT INSERT ON EventBooking2.TicketTypes TO 'app_backend'@'localhost';
+GRANT DELETE ON EventBooking2.TicketTypes TO 'app_backend'@'localhost';
 GRANT SELECT ON EventBooking2.Bookings TO 'app_backend'@'localhost';
 GRANT SELECT ON EventBooking2.BookingDetails TO 'app_backend'@'localhost';
 
