@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load user stats
         const stats = await api.get(`/my-stats?customerId=${userId}`);
         document.getElementById('my-bookings-stats').innerHTML =
-            `<p class="text-lg font-medium text-gray-700">Total Spent on Confirmed Bookings: <span class="font-bold text-indigo-600">${stats.totalSpent}</span></p>`;
+            `<p class="text-lg font-medium text-gray-700">Total Spent on Bookings: <span class="font-bold text-indigo-600">${stats.totalSpent}</span></p>`;
 
         // Load booking history
         const bookings = await api.get(`/my-bookings?customerId=${userId}`);
@@ -282,8 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="text-gray-500">${new Date(b.BookingTime).toLocaleString()}</div>
                 </td>
                 <td class="px-3 py-4 text-sm text-gray-500">
-                    <div>${b.TypeName} (x${b.Quantity})</div>
-                    <div>$${b.PricePerTicket.toFixed(2)} each</div>
+                    <div>${b.TicketType} (x${b.Quantity})</div>
+                    <div>${parseFloat(b.PricePerTicket).toFixed(2)} each</div>
                 </td>
                 <td class="px-3 py-4 text-sm text-gray-500">
                     <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${b.Status === 'Confirmed' ? 'bg-green-100 text-green-800' :
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${b.Status}
                     </span>
                 </td>
-                <td class="px-3 py-4 text-sm font-medium text-gray-900">$${b.TotalAmount.toFixed(2)}</td>
+                <td class="px-3 py-4 text-sm font-medium text-gray-900">${parseFloat(b.TotalAmount).toFixed(2)}</td>
                 <td class="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                     ${b.Status === 'Confirmed' ?
                 `<a href="#" class="text-red-600 hover:text-red-900 cancel-booking-btn" data-booking-id="${b.BookingID}">Cancel</a>` : ''}

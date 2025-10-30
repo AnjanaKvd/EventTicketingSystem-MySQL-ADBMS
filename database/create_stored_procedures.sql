@@ -1,5 +1,5 @@
 DELIMITER $$
-
+DROP PROCEDURE IF EXISTS sp_CreateBooking;
 CREATE PROCEDURE sp_CreateBooking(
     IN p_CustomerID INT,
     IN p_TicketTypeID INT,
@@ -9,45 +9,69 @@ CREATE PROCEDURE sp_CreateBooking(
 )
 BEGIN
     DECLARE v_TicketPrice DECIMAL(10, 2);
-    DECLARE v_AvailableStock INT;
+    DECLARE v_EventStock INT;     
+    DECLARE v_TicketTypeStock INT; 
     DECLARE v_TotalAmount DECIMAL(10, 2);
     DECLARE v_BookingID INT;
     DECLARE v_EventID INT;
+    DECLARE v_CustomerExists INT;
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         SET p_NewBookingID = NULL;
-        SET p_Message = 'Error: Booking failed. Transaction rolled back.';
+        SET p_Message = 'Error: Booking failed. Transaction rolled back (SQLEXCEPTION).';
     END;
 
     START TRANSACTION;
-    SELECT 
-        e.EventID, e.AvailableTickets, tt.Price 
-    INTO 
-        v_EventID, v_AvailableStock, v_TicketPrice
-    FROM Events e
-    JOIN TicketTypes tt ON e.EventID = tt.EventID
-    WHERE tt.TicketTypeID = p_TicketTypeID
-    FOR UPDATE;
-    IF v_AvailableStock >= p_Quantity THEN
 
-        SET v_TotalAmount = v_TicketPrice * p_Quantity;
-        INSERT INTO Bookings (CustomerID, TotalAmount, Status)
-        VALUES (p_CustomerID, v_TotalAmount, 'Confirmed');
-        SET v_BookingID = LAST_INSERT_ID();
-        INSERT INTO BookingDetails (BookingID, TicketTypeID, Quantity, PricePerTicket)
-        VALUES (v_BookingID, p_TicketTypeID, p_Quantity, v_TicketPrice);
-        COMMIT;
-        
-        SET p_NewBookingID = v_BookingID;
-        SET p_Message = 'Booking successful! Your Booking ID is ' + CAST(v_BookingID AS CHAR);
-
-    ELSE
+    SELECT COUNT(*) INTO v_CustomerExists FROM Users WHERE UserID = p_CustomerID;
+    IF v_CustomerExists = 0 THEN
         ROLLBACK;
         SET p_NewBookingID = NULL;
-        SET p_Message = 'Error: Not enough tickets available. Transaction rolled back.';
-    END IF;
+        SET p_Message = 'Error: CustomerID does not exist.';
+    ELSE
+        SELECT
+            e.EventID, e.AvailableTickets, 
+            tt.Price, tt.Quantity    
+        INTO
+            v_EventID, v_EventStock,   
+            v_TicketPrice, v_TicketTypeStock 
+        FROM Events e
+        JOIN TicketTypes tt ON e.EventID = tt.EventID
+        WHERE tt.TicketTypeID = p_TicketTypeID
+        FOR UPDATE; 
 
+        IF v_EventID IS NULL THEN
+            ROLLBACK;
+            SET p_NewBookingID = NULL;
+            SET p_Message = 'Error: TicketTypeID does not exist.';
+        ELSEIF v_EventStock < p_Quantity THEN
+            ROLLBACK;
+            SET p_NewBookingID = NULL;
+            SET p_Message = 'Error: Not enough tickets left for this event (overall).';
+
+        ELSEIF v_TicketTypeStock < p_Quantity THEN
+            ROLLBACK;
+            SET p_NewBookingID = NULL;
+            SET p_Message = CONCAT('Error: Not enough tickets available for this specific type. Only ', v_TicketTypeStock, ' left.');
+        ELSE
+            SET v_TotalAmount = v_TicketPrice * p_Quantity;
+
+            INSERT INTO Bookings (CustomerID, TotalAmount, Status)
+            VALUES (p_CustomerID, v_TotalAmount, 'Confirmed');
+
+            SET v_BookingID = LAST_INSERT_ID();
+
+            INSERT INTO BookingDetails (BookingID, TicketTypeID, Quantity, PricePerTicket)
+            VALUES (v_BookingID, p_TicketTypeID, p_Quantity, v_TicketPrice);
+
+            COMMIT;
+
+            SET p_NewBookingID = v_BookingID;
+            SET p_Message = CONCAT('Booking successful! Your Booking ID is ', v_BookingID);
+        END IF; 
+    END IF; 
 END$$
 
 DELIMITER ;

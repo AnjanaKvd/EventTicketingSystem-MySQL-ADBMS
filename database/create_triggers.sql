@@ -1,5 +1,5 @@
 DELIMITER $$
-
+DROP TRIGGER IF EXISTS trg_AfterBookingDetailInsert;
 CREATE TRIGGER trg_AfterBookingDetailInsert
 AFTER INSERT ON BookingDetails
 FOR EACH ROW
@@ -9,17 +9,18 @@ BEGIN
 
     SELECT Status INTO v_BookingStatus
     FROM Bookings
-    WHERE BookingID = NEW.BookingID;
+    WHERE BookingID = NEW.BookingID; 
 
     IF v_BookingStatus = 'Confirmed' THEN
-    
         SELECT EventID INTO v_EventID
         FROM TicketTypes
         WHERE TicketTypeID = NEW.TicketTypeID;
-        
         UPDATE Events
         SET AvailableTickets = AvailableTickets - NEW.Quantity
         WHERE EventID = v_EventID;
+        UPDATE TicketTypes
+        SET Quantity = Quantity - NEW.Quantity
+        WHERE TicketTypeID = NEW.TicketTypeID;
         
     END IF;
 END$$
@@ -29,7 +30,7 @@ DELIMITER ;
 
 
 DELIMITER $$
-
+DROP TRIGGER IF EXISTS trg_AfterBookingUpdate;
 CREATE TRIGGER trg_AfterBookingUpdate
 AFTER UPDATE ON Bookings
 FOR EACH ROW
@@ -42,12 +43,22 @@ BEGIN
         JOIN BookingDetails bd ON tt.TicketTypeID = bd.TicketTypeID
         SET e.AvailableTickets = e.AvailableTickets + bd.Quantity
         WHERE bd.BookingID = NEW.BookingID; 
+        
+        UPDATE TicketTypes tt
+        JOIN BookingDetails bd ON tt.TicketTypeID = bd.TicketTypeID
+        SET tt.Quantity = tt.Quantity + bd.Quantity
+        WHERE bd.BookingID = NEW.BookingID;
     ELSEIF OLD.Status = 'Pending' AND NEW.Status = 'Confirmed' THEN
     
         UPDATE Events e
         JOIN TicketTypes tt ON e.EventID = tt.EventID
         JOIN BookingDetails bd ON tt.TicketTypeID = bd.TicketTypeID
         SET e.AvailableTickets = e.AvailableTickets - bd.Quantity
+        WHERE bd.BookingID = NEW.BookingID;
+        
+        UPDATE TicketTypes tt
+        JOIN BookingDetails bd ON tt.TicketTypeID = bd.TicketTypeID
+        SET tt.Quantity = tt.Quantity - bd.Quantity
         WHERE bd.BookingID = NEW.BookingID;
         
     END IF;
@@ -86,3 +97,5 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+

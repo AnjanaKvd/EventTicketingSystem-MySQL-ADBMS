@@ -6,12 +6,12 @@ exports.createBooking = async (req, res) => {
         if (!customerId || !ticketTypeId || !quantity) {
             return res.status(400).json({ message: 'Missing required fields: customerId, ticketTypeId, quantity' });
         }
-
-        const query = 'CALL sp_CreateBooking(?, ?, ?, @p_NewBookingID, @p_Message); SELECT @p_NewBookingID AS newBookingId, @p_Message AS message;';
-        const params = [customerId, ticketTypeId, quantity];
-        
-        const [results] = await pool.query(query, params);
-        const output = results[1][0]; 
+        await pool.query(
+            'CALL sp_CreateBooking(?, ?, ?, @p_NewBookingID, @p_Message)', 
+            [customerId, ticketTypeId, quantity]
+        );
+        const [outputRows] = await pool.query('SELECT @p_NewBookingID AS newBookingId, @p_Message AS message');
+        const output = outputRows[0]; 
 
         if (output.newBookingId === null) {
             return res.status(400).json({ message: output.message });
